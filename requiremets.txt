@@ -1,0 +1,6 @@
+flask
+flask-sqlalchemy
+flask-login
+pymongo
+mysql-connector-python
+werkzeug

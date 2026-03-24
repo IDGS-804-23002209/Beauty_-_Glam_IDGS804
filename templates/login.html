@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="has-text-centered mt-6">
+    <h1 class="title is-1" style="color: #EC4899;">Bienvenida a Beauty & Glam</h1>
+    <p class="subtitle is-4">Sistema Integral de Gestión y Seguridad</p>
+    
+    <div class="columns is-centered mt-5">
+        <div class="column is-8">
+            <div class="box">
+                <p class="mb-4">Has iniciado sesión correctamente. Desde aquí puedes gestionar las citas, inventarios y revisar la seguridad del sistema.</p>
+                
+                <div class="buttons is-centered">
+                    {% if current_user.id_rol == 1 %}
+                        <a href="{{ url_for('acceso.ver_auditoria') }}" class="button is-dark is-rounded">
+                            <span class="icon"><i class="fas fa-shield-alt"></i></span>
+                            <span>Ver Bitácora de Seguridad</span>
+                        </a>
+                    {% endif %}
+                    <button class="button pink-btn is-rounded">
+                        <span class="icon"><i class="fas fa-calendar-check"></i></span>
+                        <span>Gestionar Citas</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

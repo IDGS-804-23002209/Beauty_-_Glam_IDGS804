@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+    .login-card { border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: none; }
+    .pink-gradient { background: linear-gradient(135deg, #EC4899, #F472B6); color: white; border-radius: 20px 20px 0 0; }
+</style>
+
+<div class="columns is-centered mt-6">
+    <div class="column is-4">
+        <div class="card login-card">
+            <header class="card-header pink-gradient">
+                <p class="card-header-title has-text-white is-centered">Inicio de Sesión</p>
+            </header>
+            <div class="card-content">
+                <form method="POST">
+                    <div class="field">
+                        <label class="label">Nombre de Usuario</label>
+                        <input class="input is-rounded" type="text" name="nombre_usuario" required>
+                    </div>
+                    <div class="field">
+                        <label class="label">Contraseña</label>
+                        <input class="input is-rounded" type="password" name="contrasenia" required>
+                    </div>
+                    
+                    <div class="notification is-light is-info py-3 is-rounded">
+                        <p class="is-size-7 mb-2"><b>Validación Humana:</b></p>
+                        <div class="field has-addons">
+                            <p class="control"><a class="button is-static is-small">{{ n1 }} + {{ n2 }} =</a></p>
+                            <p class="control is-expanded">
+                                <input class="input is-small" type="number" name="captcha_res" required>
+                            </p>
+                        </div>
+                    </div>
+
+                    <button class="button is-fullwidth is-rounded has-text-white" style="background-color: #EC4899;">
+                        <b>Entrar</b>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

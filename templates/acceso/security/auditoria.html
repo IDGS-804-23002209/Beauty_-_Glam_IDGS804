@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="box is-rounded shadow">
+    <div class="level">
+        <div class="level-left">
+            <h1 class="title is-4"> Bitácora de Seguridad (Auditoría)</h1>
+        </div>
+        <div class="level-right">
+            <span class="tag is-info is-light">Base de Datos: MongoDB</span>
+        </div>
+    </div>
+
+    <table class="table is-fullwidth is-hoverable is-striped">
+        <thead>
+            <tr>
+                <th>Fecha y Hora</th>
+                <th>Usuario</th>
+                <th>Acción Realizada</th>
+                <th>Estatus</th>
+                <th>Detalle</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td class="is-size-7">{{ log.fecha }}</td>
+                <td><strong>{{ log.usuario }}</strong></td>
+                <td>{{ log.accion }}</td>
+                <td>
+                    <span class="tag {% if log.resultado == 'EXITOSO' %}is-success{% else %}is-danger{% endif %} is-light">
+                        {{ log.resultado }}
+                    </span>
+                </td>
+                <td>
+                    <a href="/seguridad/detalle/{{ log._id }}" class="button is-small is-rounded is-white">
+                        <i class="fas fa-eye has-text-pink"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

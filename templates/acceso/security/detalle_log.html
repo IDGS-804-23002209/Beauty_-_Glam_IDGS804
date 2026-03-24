@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="columns is-centered">
+    <div class="column is-6">
+        <div class="box">
+            <h3 class="title is-5">Detalle del Evento</h3>
+            <hr>
+            <div class="columns is-multiline">
+                <div class="column is-6">
+                    <p class="heading">Usuario</p>
+                    <p class="subtitle is-6">{{ log.usuario }}</p>
+                </div>
+                <div class="column is-6">
+                    <p class="heading">Dirección IP</p>
+                    <p class="subtitle is-6"><code>{{ log.ip }}</code></p>
+                </div>
+                <div class="column is-12">
+                    <p class="heading">Dispositivo / Agente</p>
+                    <p class="is-size-7 has-text-grey">{{ log.navegador }}</p>
+                </div>
+            </div>
+            <a href="/seguridad/auditoria" class="button is-light is-fullwidth">Volver a la lista</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
