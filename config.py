@@ -2,7 +2,7 @@ import os
 
 class Config:
     # --- MySQL (Estructura y Roles) ---
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:root@localhost/salon_belleza'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://LAPLANTA:LAPLANTA10s.@localhost/prueba'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     SECRET_KEY = os.urandom(24)
@@ -14,4 +14,4 @@ class Config:
     SECURITY_TOKEN_MAX_AGE = 600
     
     # --- MongoDB (Bitácora Masiva) ---
-    MONGO_URI = "mongodb://localhost:27017/salon_belleza_logs"
+    # MONGO_URI = "mongodb://localhost:27017/salon_belleza_logs"
