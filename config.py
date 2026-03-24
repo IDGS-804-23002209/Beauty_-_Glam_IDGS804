@@ -2,7 +2,7 @@ import os
 
 class Config:
     # --- MySQL (Estructura y Roles) ---
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:root@localhost/salon_belleza'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://LAPLANTA:root@localhost/salon_belleza'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     SECRET_KEY = os.urandom(24)
