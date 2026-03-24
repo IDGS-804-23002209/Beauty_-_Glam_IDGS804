@@ -15,6 +15,3 @@ class Config:
     
     # --- MongoDB (Bitácora Masiva) ---
     MONGO_URI = "mongodb://localhost:27017/salon_belleza_logs"
-
-    # --- Flask (Configuración de la Aplicación) ---
-    DEBUG = True
