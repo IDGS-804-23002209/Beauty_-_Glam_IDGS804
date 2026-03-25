@@ -2,7 +2,11 @@ import os
 
 class Config:
     # --- MySQL (Estructura y Roles) ---
+<<<<<<< HEAD
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:root@localhost/salon_belleza1'
+=======
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://LAPLANTA:LAPLANTA@localhost/salon_belleza'
+>>>>>>> 9bafb839699e372c260aa01d80570e00c2aa041b
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     SECRET_KEY = os.urandom(24)
@@ -15,8 +19,15 @@ class Config:
     
     # --- MongoDB (Bitácora Masiva) ---
     MONGO_URI = "mongodb://localhost:27017/salon_belleza_logs"
+<<<<<<< HEAD
 
     # 1. Conexión a MongoDB (Definida antes que los Blueprints)
 client = MongoClient("mongodb://localhost:27017/")
 mongo_db = client['salon_audit']
 bitacora_mongo = mongo_db['logs_seguridad']
+=======
+    
+    # --- Flask (Configuración de la Aplicación) ---
+    DEBUG = True
+    TESTING = False
+>>>>>>> 9bafb839699e372c260aa01d80570e00c2aa041b

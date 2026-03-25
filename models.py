@@ -313,6 +313,11 @@ class DetalleCompra(db.Model):
     compra = db.relationship('CompraProveedor', back_populates='detalles')
     producto = db.relationship('Producto', back_populates='detalles_compra')
 
+<<<<<<< HEAD
+=======
+# --- LOGS Y OTROS ---
+
+>>>>>>> 9bafb839699e372c260aa01d80570e00c2aa041b
 class HistorialEstatus(db.Model):
     __tablename__ = 'historial_estatus'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
