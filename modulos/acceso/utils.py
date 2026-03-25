@@ -1,6 +1,5 @@
 from datetime import datetime
 from flask import request
-# Aquí importarás la conexión de Mongo que definas en tu __init__.py
 # from app import bitacora_db 
 
 def registrar_auditoria(usuario, accion, resultado="Exitoso"):
