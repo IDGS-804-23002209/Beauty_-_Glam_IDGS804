@@ -1,35 +1,33 @@
-import os
 from flask import Flask, render_template
-from flask_login import LoginManager
-from pymongo import MongoClient
-from models import db, Usuario
+from flask_wtf.csrf import CSRFProtect
+from config import DevelopmentConfig
+from flask_migrate import Migrate
+from models import db
+from pedidos.routes import pedidos
+from ventas.routes import ventas
+from flask_security import login_required, current_user
+from modulos.acceso.routes import acceso_bp
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost/salon_belleza'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.from_object(DevelopmentConfig)
 
-# 1. Conexión a MongoDB (Definida antes que los Blueprints)
-client = MongoClient("mongodb://localhost:27017/")
-mongo_db = client['salon_audit']
-bitacora_mongo = mongo_db['logs_seguridad']
-
-# 2. Inicializar Extensiones
-db.init_app(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'acceso.login'
-
-@login_manager.user_loader
-def load_user(user_id):
-    return Usuario.query.get(int(user_id))
-
-# 3. Registro de Blueprints (AL FINAL para evitar errores circulares)
-from modulos.acceso.routes import acceso_bp
+app.register_blueprint(pedidos)
+app.register_blueprint(ventas)
 app.register_blueprint(acceso_bp)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+db.init_app(app)
+migrate = Migrate(app, db)
+csrf = CSRFProtect(app)
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('404.html'), 404
+
+@app.route("/", methods=['GET'])
+@app.route("/inicio")
+@login_required
+def inicio():
+    return render_template("inicio.html")
 
 if __name__ == '__main__':
     app.run(debug=True)

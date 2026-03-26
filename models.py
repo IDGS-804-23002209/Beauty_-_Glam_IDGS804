@@ -1,95 +1,328 @@
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin
 from datetime import datetime
 
 db = SQLAlchemy()
 
-# 1. TABLAS BASE (Independientes)
-# ---------------------------------------------------------------------
+# --- INFRAESTRUCTURA Y PERSONAS ---
+
 class Persona(db.Model):
     __tablename__ = 'persona'
-    id_persona = db.Column(db.Integer, primary_key=True)
-    nombre_persona = db.Column(db.String(50))
-    apellidos = db.Column(db.String(100))
+    id_persona = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_persona = db.Column(db.String(100))
+    apellido = db.Column(db.String(100))
     telefono = db.Column(db.String(20))
     correo = db.Column(db.String(150))
     direccion = db.Column(db.String(255))
-    
-    # Relaciones
-    usuarios = db.relationship('Usuario', backref='datos_personales', lazy=True)
-    clientes = db.relationship('Cliente', backref='persona_cliente', lazy=True)
-    empleados = db.relationship('Empleado', backref='persona_empleado', lazy=True)
 
-class Rol(db.Model):
-    __tablename__ = 'rol'
-    id_rol = db.Column(db.Integer, primary_key=True)
-    nombre_rol = db.Column(db.String(100))
-    
-    # Relación
-    usuarios = db.relationship('Usuario', backref='rol_perfil', lazy=True)
+    usuarios = db.relationship('Usuario', back_populates='persona')
+    clientes = db.relationship('Cliente', back_populates='persona')
+    empleados = db.relationship('Empleado', back_populates='persona')
+    proveedores = db.relationship('Proveedor', back_populates='persona')
 
-class Categoria(db.Model):
-    __tablename__ = 'categoria'
-    id_categoria = db.Column(db.Integer, primary_key=True)
-    nombre_categoria = db.Column(db.String(100))
-    servicios = db.relationship('Servicio', backref='categoria', lazy=True)
+class Empresa(db.Model):
+    __tablename__ = 'empresa'
+    rfc = db.Column(db.String(13), primary_key=True)
+    nombre_empresa = db.Column(db.String(150))
+    direccion = db.Column(db.String(255))
+    contacto = db.Column(db.String(150))
 
-class Puesto(db.Model):
-    __tablename__ = 'puesto'
-    id_puesto = db.Column(db.Integer, primary_key=True)
-    nombre_puesto = db.Column(db.String(100))
-    empleados = db.relationship('Empleado', backref='puesto', lazy=True)
+    marcas = db.relationship('Marca', back_populates='empresa')
+    proveedores = db.relationship('Proveedor', back_populates='empresa')
 
-# 2. TABLAS DE USUARIO Y ACCESO (Tu Combo 1)
-# ---------------------------------------------------------------------
-class Usuario(db.Model, UserMixin):
+# --- SEGURIDAD Y ACCESO ---
+
+class Usuario(db.Model):
     __tablename__ = 'usuario'
-    id_usuario = db.Column(db.Integer, primary_key=True)
-    nombre_usuario = db.Column(db.String(100), unique=True, nullable=False)
-    contrasenia = db.Column(db.String(255), nullable=False)
+    id_usuario = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_usuario = db.Column(db.String(100), unique=True)
+    contrasenia = db.Column(db.String(255))
     estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
     ultimo_acceso = db.Column(db.DateTime)
     intentos_fallidos = db.Column(db.Integer, default=0)
     bloqueado = db.Column(db.Boolean, default=False)
-    
-    # Llaves Foráneas
     id_persona = db.Column(db.Integer, db.ForeignKey('persona.id_persona'))
-    id_rol = db.Column(db.Integer, db.ForeignKey('rol.id_rol'))
 
-    def get_id(self):
-        return str(self.id_usuario)
+    persona = db.relationship('Persona', back_populates='usuarios')
+    clientes = db.relationship('Cliente', back_populates='usuario')
+    empleados = db.relationship('Empleado', back_populates='usuario')
+    sesiones = db.relationship('Sesion', back_populates='usuario')
 
-# 3. TABLAS OPERATIVAS (Módulos de tus compañeros)
-# ---------------------------------------------------------------------
-class Cliente(db.Model):
-    __tablename__ = 'cliente'
-    id_cliente = db.Column(db.Integer, primary_key=True)
-    estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
-    id_persona = db.Column(db.Integer, db.ForeignKey('persona.id_persona'))
+class Sesion(db.Model):
+    __tablename__ = 'sesion'
+    id_sesion = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    token_sesion = db.Column(db.String(255))
+    fecha_inicio = db.Column(db.DateTime)
+    fecha_expiracion = db.Column(db.DateTime)
+    fecha_cierre = db.Column(db.DateTime)
+    direccion_ip = db.Column(db.String(45))
+    dispositivo = db.Column(db.String(150))
+    estado = db.Column(db.Enum('ACTIVA', 'CERRADA', 'EXPIRADA'))
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'))
+
+    usuario = db.relationship('Usuario', back_populates='sesiones')
+
+# --- RECURSOS HUMANOS ---
+
+class Puesto(db.Model):
+    __tablename__ = 'puesto'
+    id_puesto = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_puesto = db.Column(db.String(100))
+
+    empleados = db.relationship('Empleado', back_populates='puesto')
 
 class Empleado(db.Model):
     __tablename__ = 'empleado'
-    id_empleado = db.Column(db.Integer, primary_key=True)
+    id_empleado = db.Column(db.Integer, primary_key=True, autoincrement=True)
     fecha_contratacion = db.Column(db.Date)
     estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
     id_persona = db.Column(db.Integer, db.ForeignKey('persona.id_persona'))
     id_puesto = db.Column(db.Integer, db.ForeignKey('puesto.id_puesto'))
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'))
 
+    persona = db.relationship('Persona', back_populates='empleados')
+    puesto = db.relationship('Puesto', back_populates='empleados')
+    usuario = db.relationship('Usuario', back_populates='empleados')
+    citas = db.relationship('Cita', back_populates='empleado')
+    horarios = db.relationship('Horario', secondary='empleado_horario', back_populates='empleados')
+
+class Horario(db.Model):
+    __tablename__ = 'horario'
+    id_horario = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    dia = db.Column(db.Enum('LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'))
+    hora_inicio = db.Column(db.Time)
+    hora_fin = db.Column(db.Time)
+
+    empleados = db.relationship('Empleado', secondary='empleado_horario', back_populates='horarios')
+
+# Tabla intermedia para Empleado y Horario (Muchos a Muchos)
+empleado_horario = db.Table('empleado_horario',
+    db.Column('id_empleado', db.Integer, db.ForeignKey('empleado.id_empleado'), primary_key=True),
+    db.Column('id_horario', db.Integer, db.ForeignKey('horario.id_horario'), primary_key=True)
+)
+
+# --- CLIENTES Y OPERACIONES ---
+
+class Cliente(db.Model):
+    __tablename__ = 'cliente'
+    id_cliente = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
+    id_persona = db.Column(db.Integer, db.ForeignKey('persona.id_persona'))
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'))
+
+    persona = db.relationship('Persona', back_populates='clientes')
+    usuario = db.relationship('Usuario', back_populates='clientes')
+    citas = db.relationship('Cita', back_populates='cliente')
+
+class Categoria(db.Model):
+    __tablename__ = 'categoria'
+    id_categoria = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_categoria = db.Column(db.String(100))
+
+    servicios = db.relationship('Servicio', back_populates='categoria')
+
 class Servicio(db.Model):
     __tablename__ = 'servicio'
-    id_servicio = db.Column(db.Integer, primary_key=True)
+    id_servicio = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nombre_servicio = db.Column(db.String(150))
     precio = db.Column(db.Numeric(10, 2))
     duracion_minutos = db.Column(db.Integer)
     estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
     id_categoria = db.Column(db.Integer, db.ForeignKey('categoria.id_categoria'))
 
+    categoria = db.relationship('Categoria', back_populates='servicios')
+    detalles_cita = db.relationship('DetalleCita', back_populates='servicio')
+    insumos = db.relationship('InsumoServicio', back_populates='servicio')
+
 class Cita(db.Model):
     __tablename__ = 'cita'
-    id_cita = db.Column(db.Integer, primary_key=True)
+    id_cita = db.Column(db.Integer, primary_key=True, autoincrement=True)
     fecha_hora = db.Column(db.DateTime)
     estatus = db.Column(db.Enum('PENDIENTE', 'CONFIRMADA', 'CANCELADA', 'FINALIZADA'), default='PENDIENTE')
     id_cliente = db.Column(db.Integer, db.ForeignKey('cliente.id_cliente'))
     id_empleado = db.Column(db.Integer, db.ForeignKey('empleado.id_empleado'))
+
+    cliente = db.relationship('Cliente', back_populates='citas')
+    empleado = db.relationship('Empleado', back_populates='citas')
+    detalles = db.relationship('DetalleCita', back_populates='cita')
+    pagos = db.relationship('Pago', back_populates='cita')
+
+class DetalleCita(db.Model):
+    __tablename__ = 'detalle_cita'
+    id_detalle_cita = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_cita = db.Column(db.Integer, db.ForeignKey('cita.id_cita'))
+    id_servicio = db.Column(db.Integer, db.ForeignKey('servicio.id_servicio'))
+    subtotal = db.Column(db.Numeric(10, 2))
+    descuento = db.Column(db.Numeric(10, 2), default=0.00)
+
+    cita = db.relationship('Cita', back_populates='detalles')
+    servicio = db.relationship('Servicio', back_populates='detalles_cita')
+
+# --- PAGOS Y PROMOCIONES ---
+
+class MetodoPago(db.Model):
+    __tablename__ = 'metodo_pago'
+    id_metodo_pago = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_metodo = db.Column(db.String(100))
+
+    pagos = db.relationship('Pago', back_populates='metodo_pago')
+    detalles_pago = db.relationship('DetallePago', back_populates='metodo_pago')
+
+class Promocion(db.Model):
+    __tablename__ = 'promocion'
+    id_promocion = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tipo_promocion = db.Column(db.String(100))
+    descripcion = db.Column(db.String(255))
+    valor_descuento = db.Column(db.Numeric(10, 2))
+    estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
+
+    pagos = db.relationship('Pago', back_populates='promocion')
+
+class Pago(db.Model):
+    __tablename__ = 'pago'
+    id_pago = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fecha_pago = db.Column(db.DateTime)
+    subtotal = db.Column(db.Numeric(10, 2))
+    impuesto = db.Column(db.Numeric(10, 2))
+    propina = db.Column(db.Numeric(10, 2))
+    total = db.Column(db.Numeric(10, 2))
+    id_cita = db.Column(db.Integer, db.ForeignKey('cita.id_cita'))
+    id_metodo_pago = db.Column(db.Integer, db.ForeignKey('metodo_pago.id_metodo_pago'))
+    id_promocion = db.Column(db.Integer, db.ForeignKey('promocion.id_promocion'))
+
+    cita = db.relationship('Cita', back_populates='pagos')
+    metodo_pago = db.relationship('MetodoPago', back_populates='pagos')
+    promocion = db.relationship('Promocion', back_populates='pagos')
+    detalles_pago = db.relationship('DetallePago', back_populates='pago')
+
+class DetallePago(db.Model):
+    __tablename__ = 'detalle_pago'
+    id_detalle_pago = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_pago = db.Column(db.Integer, db.ForeignKey('pago.id_pago'))
+    id_metodo_pago = db.Column(db.Integer, db.ForeignKey('metodo_pago.id_metodo_pago'))
+    monto = db.Column(db.Numeric(10, 2))
+
+    pago = db.relationship('Pago', back_populates='detalles_pago')
+    metodo_pago = db.relationship('MetodoPago', back_populates='detalles_pago')
+
+# --- INVENTARIO Y PROVEEDORES ---
+
+class Marca(db.Model):
+    __tablename__ = 'marca'
+    id_marca = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_marca = db.Column(db.String(100))
+    estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
+    rfc = db.Column(db.String(13), db.ForeignKey('empresa.rfc'))
+
+    empresa = db.relationship('Empresa', back_populates='marcas')
+    productos = db.relationship('Producto', back_populates='marca')
+
+class UnidadMedida(db.Model):
+    __tablename__ = 'unidad_medida'
+    id_unidad_medida = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_unidad = db.Column(db.String(50))
+
+    productos = db.relationship('Producto', back_populates='unidad_medida')
+
+class Producto(db.Model):
+    __tablename__ = 'producto'
+    codigo_producto = db.Column(db.String(50), primary_key=True)
+    nombre = db.Column(db.String(150))
+    stock_actual = db.Column(db.Integer)
+    precio_compra = db.Column(db.Numeric(10, 2))
+    precio_unitario = db.Column(db.Numeric(10, 2))
+    estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
+    id_marca = db.Column(db.Integer, db.ForeignKey('marca.id_marca'))
+    id_unidad_medida = db.Column(db.Integer, db.ForeignKey('unidad_medida.id_unidad_medida'))
+
+    marca = db.relationship('Marca', back_populates='productos')
+    unidad_medida = db.relationship('UnidadMedida', back_populates='productos')
+    insumos_servicio = db.relationship('InsumoServicio', back_populates='producto')
+    inventario = db.relationship('InventarioProducto', back_populates='producto', uselist=False)
+    movimientos = db.relationship('MovimientoInventario', back_populates='producto')
+    detalles_compra = db.relationship('DetalleCompra', back_populates='producto')
+
+class InsumoServicio(db.Model):
+    __tablename__ = 'insumo_servicio'
+    id_insumo_servicio = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_servicio = db.Column(db.Integer, db.ForeignKey('servicio.id_servicio'))
+    codigo_producto = db.Column(db.String(50), db.ForeignKey('producto.codigo_producto'))
+    cantidad_utilizada = db.Column(db.Numeric(10, 2))
+
+    servicio = db.relationship('Servicio', back_populates='insumos')
+    producto = db.relationship('Producto', back_populates='insumos_servicio')
+
+class TipoProveedor(db.Model):
+    __tablename__ = 'tipo_proveedor'
+    id_tipo_proveedor = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tipo_proveedor = db.Column(db.String(100))
+
+    proveedores = db.relationship('Proveedor', back_populates='tipo_proveedor')
+
+class Proveedor(db.Model):
+    __tablename__ = 'proveedor'
+    id_proveedor = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_persona = db.Column(db.Integer, db.ForeignKey('persona.id_persona'))
+    rfc = db.Column(db.String(13), db.ForeignKey('empresa.rfc'))
+    id_tipo_proveedor = db.Column(db.Integer, db.ForeignKey('tipo_proveedor.id_tipo_proveedor'))
+    estatus = db.Column(db.Enum('ACTIVO', 'INACTIVO'), default='ACTIVO')
+
+    persona = db.relationship('Persona', back_populates='proveedores')
+    empresa = db.relationship('Empresa', back_populates='proveedores')
+    tipo_proveedor = db.relationship('TipoProveedor', back_populates='proveedores')
+    compras = db.relationship('CompraProveedor', back_populates='proveedor')
+
+class InventarioProducto(db.Model):
+    __tablename__ = 'inventario_producto'
+    codigo_producto = db.Column(db.String(50), db.ForeignKey('producto.codigo_producto'), primary_key=True)
+    stock_minimo = db.Column(db.Integer, default=0)
+    stock_maximo = db.Column(db.Integer, default=0)
+    ultima_actualizacion = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    producto = db.relationship('Producto', back_populates='inventario')
+
+class MovimientoInventario(db.Model):
+    __tablename__ = 'movimiento_inventario'
+    id_movimiento = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    codigo_producto = db.Column(db.String(50), db.ForeignKey('producto.codigo_producto'))
+    tipo = db.Column(db.Enum('ENTRADA', 'SALIDA', 'AJUSTE'))
+    cantidad = db.Column(db.Integer)
+    motivo = db.Column(db.String(150))
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    producto = db.relationship('Producto', back_populates='movimientos')
+
+class CompraProveedor(db.Model):
+    __tablename__ = 'compra_proveedor'
+    id_compra_proveedor = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    fecha_compra = db.Column(db.DateTime, default=datetime.utcnow)
+    total = db.Column(db.Numeric(10, 2))
+    id_proveedor = db.Column(db.Integer, db.ForeignKey('proveedor.id_proveedor'))
+
+    proveedor = db.relationship('Proveedor', back_populates='compras')
+    detalles = db.relationship('DetalleCompra', back_populates='compra')
+
+class DetalleCompra(db.Model):
+    __tablename__ = 'detalle_compra'
+    id_detalle_compra = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_compra_proveedor = db.Column(db.Integer, db.ForeignKey('compra_proveedor.id_compra_proveedor'))
+    codigo_producto = db.Column(db.String(50), db.ForeignKey('producto.codigo_producto'))
+    cantidad = db.Column(db.Integer)
+    precio_unitario = db.Column(db.Numeric(10, 2))
+    subtotal = db.Column(db.Numeric(10, 2))
+
+    compra = db.relationship('CompraProveedor', back_populates='detalles')
+    producto = db.relationship('Producto', back_populates='detalles_compra')
+
+<<<<<<< HEAD
+=======
+# --- LOGS Y OTROS ---
+
+>>>>>>> 9bafb839699e372c260aa01d80570e00c2aa041b
+class HistorialEstatus(db.Model):
+    __tablename__ = 'historial_estatus'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    tabla_afectada = db.Column(db.String(100), nullable=False)
+    id_registro = db.Column(db.Integer, nullable=False)
+    estatus_anterior = db.Column(db.String(50))
+    estatus_nuevo = db.Column(db.String(50), nullable=False)
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
