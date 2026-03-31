@@ -3,13 +3,11 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# --- INFRAESTRUCTURA Y PERSONAS ---
-
 class Persona(db.Model):
     __tablename__ = 'persona'
     id_persona = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    nombre_persona = db.Column(db.String(100))
-    apellido = db.Column(db.String(100))
+    nombre_persona = db.Column(db.String(50))
+    apellidos = db.Column(db.String(100)) # Corregido a plural para empatar con SQL
     telefono = db.Column(db.String(20))
     correo = db.Column(db.String(150))
     direccion = db.Column(db.String(255))
@@ -29,7 +27,26 @@ class Empresa(db.Model):
     marcas = db.relationship('Marca', back_populates='empresa')
     proveedores = db.relationship('Proveedor', back_populates='empresa')
 
-# --- SEGURIDAD Y ACCESO ---
+class Rol(db.Model):
+    __tablename__ = 'rol'
+    id_rol = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_rol = db.Column(db.String(100))
+    
+    usuarios = db.relationship('Usuario', back_populates='rol')
+    permisos = db.relationship('Permisos', secondary='rol_permisos', back_populates='roles')
+
+class Permisos(db.Model):
+    __tablename__ = 'permisos'
+    id_permisos = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre_permisos = db.Column(db.String(100))
+    
+    roles = db.relationship('Rol', secondary='rol_permisos', back_populates='permisos')
+
+class RolPermisos(db.Model):
+    __tablename__ = 'rol_permisos'
+    id_rol_permisos = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_rol = db.Column(db.Integer, db.ForeignKey('rol.id_rol'))
+    id_permisos = db.Column(db.Integer, db.ForeignKey('permisos.id_permisos'))
 
 class Usuario(db.Model):
     __tablename__ = 'usuario'
@@ -41,11 +58,14 @@ class Usuario(db.Model):
     intentos_fallidos = db.Column(db.Integer, default=0)
     bloqueado = db.Column(db.Boolean, default=False)
     id_persona = db.Column(db.Integer, db.ForeignKey('persona.id_persona'))
+    id_rol = db.Column(db.Integer, db.ForeignKey('rol.id_rol')) # Agregado para SQL
 
     persona = db.relationship('Persona', back_populates='usuarios')
+    rol = db.relationship('Rol', back_populates='usuarios')
     clientes = db.relationship('Cliente', back_populates='usuario')
     empleados = db.relationship('Empleado', back_populates='usuario')
     sesiones = db.relationship('Sesion', back_populates='usuario')
+    bitacoras = db.relationship('Bitacora', back_populates='usuario')
 
 class Sesion(db.Model):
     __tablename__ = 'sesion'
@@ -60,8 +80,6 @@ class Sesion(db.Model):
     id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'))
 
     usuario = db.relationship('Usuario', back_populates='sesiones')
-
-# --- RECURSOS HUMANOS ---
 
 class Puesto(db.Model):
     __tablename__ = 'puesto'
@@ -94,13 +112,10 @@ class Horario(db.Model):
 
     empleados = db.relationship('Empleado', secondary='empleado_horario', back_populates='horarios')
 
-# Tabla intermedia para Empleado y Horario (Muchos a Muchos)
 empleado_horario = db.Table('empleado_horario',
     db.Column('id_empleado', db.Integer, db.ForeignKey('empleado.id_empleado'), primary_key=True),
     db.Column('id_horario', db.Integer, db.ForeignKey('horario.id_horario'), primary_key=True)
 )
-
-# --- CLIENTES Y OPERACIONES ---
 
 class Cliente(db.Model):
     __tablename__ = 'cliente'
@@ -157,8 +172,6 @@ class DetalleCita(db.Model):
     cita = db.relationship('Cita', back_populates='detalles')
     servicio = db.relationship('Servicio', back_populates='detalles_cita')
 
-# --- PAGOS Y PROMOCIONES ---
-
 class MetodoPago(db.Model):
     __tablename__ = 'metodo_pago'
     id_metodo_pago = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -203,8 +216,6 @@ class DetallePago(db.Model):
 
     pago = db.relationship('Pago', back_populates='detalles_pago')
     metodo_pago = db.relationship('MetodoPago', back_populates='detalles_pago')
-
-# --- INVENTARIO Y PROVEEDORES ---
 
 class Marca(db.Model):
     __tablename__ = 'marca'
@@ -276,7 +287,7 @@ class InventarioProducto(db.Model):
     codigo_producto = db.Column(db.String(50), db.ForeignKey('producto.codigo_producto'), primary_key=True)
     stock_minimo = db.Column(db.Integer, default=0)
     stock_maximo = db.Column(db.Integer, default=0)
-    ultima_actualizacion = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    ultima_actualizacion = db.Column(db.DateTime, default=datetime.utcnow)
 
     producto = db.relationship('Producto', back_populates='inventario')
 
@@ -313,11 +324,6 @@ class DetalleCompra(db.Model):
     compra = db.relationship('CompraProveedor', back_populates='detalles')
     producto = db.relationship('Producto', back_populates='detalles_compra')
 
-<<<<<<< HEAD
-=======
-# --- LOGS Y OTROS ---
-
->>>>>>> 9bafb839699e372c260aa01d80570e00c2aa041b
 class HistorialEstatus(db.Model):
     __tablename__ = 'historial_estatus'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -326,3 +332,14 @@ class HistorialEstatus(db.Model):
     estatus_anterior = db.Column(db.String(50))
     estatus_nuevo = db.Column(db.String(50), nullable=False)
     fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Bitacora(db.Model):
+    __tablename__ = 'bitacora'
+    id_bitacora = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    accion = db.Column(db.String(100))
+    fecha_hora = db.Column(db.DateTime, default=datetime.utcnow)
+    tabla_afectada = db.Column(db.String(100))
+    id_registro_afectado = db.Column(db.Integer)
+    id_usuario = db.Column(db.Integer, db.ForeignKey('usuario.id_usuario'))
+
+    usuario = db.relationship('Usuario', back_populates='bitacoras')
